@@ -2,9 +2,9 @@
 name = "reddit_new"
 version = "0.1.0"
 authors = ["phil <ph-ketteni@t-online.de>"]
-edition = "2020"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 reqwest = "0.9.22"
+argparse = "0.2.2"

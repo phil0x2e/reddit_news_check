@@ -1,14 +1,19 @@
 extern crate reqwest;
+extern crate argparse;
+
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
 };
-use std::env;
+
+use argparse::{ArgumentParser, Store};
 
 fn check_url(url : &str, max_days: u32) -> Vec<bool>{
-    let res = reqwest::Client::new()
-        .get(url).send().unwrap().text().unwrap();
-    
+    println!("{}", url);
+    let res = reqwest::get(url).expect("Couldn't get url")
+    .text()
+    .expect("Couldn't extract text from url");
+
     let mut days = Vec::new();
     for d in 0..max_days+1{
         if d == 0{
@@ -41,11 +46,21 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2{
-        println!("Please supply path to file with urls.");
-    }else{
-        let file = File::open(&args[1]);
+    let mut file_path = "World".to_string();
+    let mut days : u32 = 0;
+    {
+        let mut ap = ArgumentParser::new();
+        ap.set_description("Reddit Profile news checker");
+        ap.refer(&mut file_path)
+                .required().add_argument("FILE", Store,
+                "Path to Line separated url file.");
+        ap.refer(&mut days)
+                .required().add_argument("DAYS", Store,
+                "Specify in how many past days to search.");
+        ap.parse_args_or_exit();
+    }
+
+        let file = File::open(file_path);
         let file = match file{
             Ok(file) => file,
             Err(_error) => {
@@ -56,14 +71,11 @@ fn main() {
         let buf = BufReader::new(file);
         let urls = buf.lines().map(|x| x.unwrap()).collect::<Vec<String>>();
 
-        let n = 7;
 
-        let urls_with_news = get_urls_with_recent_posts(&urls, n);
-        
-        println!("====================\nUrls mit posts in den letzten {} Tagen: ", n);
+        let urls_with_news = get_urls_with_recent_posts(&urls, days);
+
+        println!("====================\nUrls mit posts in den letzten {} Tagen: ", days);
         for url in urls_with_news{
             println!("{}", url);
         }
-    }
-
 }
