@@ -5,12 +5,12 @@ use std::{
     fs::File,
     io::{prelude::*, BufReader},
 };
-
+use reqwest::header::COOKIE;
 use argparse::{ArgumentParser, Store};
 
 fn check_url(url : &str, max_days: u32) -> Vec<bool>{
-    println!("{}", url);
-    let res = reqwest::get(url).expect("Couldn't get url")
+    let client = reqwest::Client::new();
+    let res = client.get(url).header(COOKIE, "over18=1").send().expect("Couldn't get url")
     .text()
     .expect("Couldn't extract text from url");
 
