@@ -8,6 +8,7 @@ use std::{
 use reqwest::header::COOKIE;
 use argparse::{ArgumentParser, Store};
 
+
 fn check_url(url : &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error>{
     let client = reqwest::blocking::Client::new();
     let res = client.get(url).header(COOKIE, "over18=1").send()?
@@ -41,6 +42,7 @@ fn post_in_last_n_days(url: &str, n: u32) -> bool{
     }
 }
 
+
 fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
     let mut ret_urls = Vec::new();
     for (i, url) in urls.iter().enumerate(){
@@ -52,12 +54,12 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
     ret_urls
 }
 
+
 fn main() {
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let mut file_path = String::new();
     let mut days : u32 = 0;
     let description_str = format!("Reddit news checker Version {}", VERSION);
-
     {
         let mut ap = ArgumentParser::new();
         ap.set_description(&description_str);
@@ -69,23 +71,20 @@ fn main() {
                 "Specify in how many past days to search.");
         ap.parse_args_or_exit();
     }
-
-        let file = File::open(file_path);
-        let file = match file{
-            Ok(file) => file,
-            Err(_error) => {
-                println!("File not found, or could not be opened.");
-                return;
-            }
-        };
-        let buf = BufReader::new(file);
-        let urls = buf.lines().map(|x| x.unwrap()).collect::<Vec<String>>();
-
-
-        let urls_with_news = get_urls_with_recent_posts(&urls, days);
-
-        println!("==============================\nUrls with posts in the last {} days: ({}/{})", days, urls_with_news.len(), urls.len());
-        for url in urls_with_news{
-            println!("{}", url);
+    let file = File::open(file_path);
+    let file = match file{
+        Ok(file) => file,
+        Err(_error) => {
+            println!("File not found, or could not be opened.");
+            return;
         }
+    };
+    let buf = BufReader::new(file);
+    let urls = buf.lines().map(|x| x.expect("Error reading line from file")).collect::<Vec<String>>();
+    let urls_with_news = get_urls_with_recent_posts(&urls, days);
+
+    println!("==============================\nUrls with posts in the last {} days: ({}/{})", days, urls_with_news.len(), urls.len());
+    for url in urls_with_news{
+        println!("{}", url);
+    }
 }
