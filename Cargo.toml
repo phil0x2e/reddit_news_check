@@ -1,5 +1,5 @@
 [package]
-name = "reddit_new"
+name = "reddit_news_checker"
 version = "0.2.0"
 authors = ["phil <ph-ketteni@t-online.de>"]
 edition = '2018'

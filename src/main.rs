@@ -53,11 +53,14 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
 }
 
 fn main() {
+    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let mut file_path = String::new();
     let mut days : u32 = 0;
+    let description_str = format!("Reddit news checker Version {}", VERSION);
+
     {
         let mut ap = ArgumentParser::new();
-        ap.set_description("Reddit Profile news checker");
+        ap.set_description(&description_str);
         ap.refer(&mut file_path)
                 .required().add_argument("FILE", Store,
                 "Path to Line separated url file.");
