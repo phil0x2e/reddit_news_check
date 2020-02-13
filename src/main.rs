@@ -9,7 +9,7 @@ use reqwest::header::COOKIE;
 use argparse::{ArgumentParser, Store};
 
 fn check_url(url : &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error>{
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     let res = client.get(url).header(COOKIE, "over18=1").send()?
     .text()?;
 
