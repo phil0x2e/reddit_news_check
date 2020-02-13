@@ -8,11 +8,10 @@ use std::{
 use reqwest::header::COOKIE;
 use argparse::{ArgumentParser, Store};
 
-fn check_url(url : &str, max_days: u32) -> Vec<bool>{
+fn check_url(url : &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error>{
     let client = reqwest::Client::new();
-    let res = client.get(url).header(COOKIE, "over18=1").send().expect("Couldn't get url")
-    .text()
-    .expect("Couldn't extract text from url");
+    let res = client.get(url).header(COOKIE, "over18=1").send()?
+    .text()?;
 
     let mut days = Vec::new();
     for d in 0..max_days+1{
@@ -25,19 +24,27 @@ fn check_url(url : &str, max_days: u32) -> Vec<bool>{
             days.push(res.contains(format!(">{} days ago", d).as_str()));
         }
     }
-    days
+    Ok(days)
 }
 
 
 fn post_in_last_n_days(url: &str, n: u32) -> bool{
-    let days = check_url(url, n);
-    days.contains(&true)
+    match check_url(url, n){
+        Err(_e) => {
+            println!(" (Line is not an URL or answer doesn't have text.)");
+            false
+        },
+        Ok(days) =>{
+            println!("");
+            days.contains(&true)
+        }
+    }
 }
 
 fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
     let mut ret_urls = Vec::new();
     for (i, url) in urls.iter().enumerate(){
-        println!("Url {} von {} wird geprüft", i+1 ,urls.len());
+        print!("Line {} of {} is being checked...", i+1 ,urls.len());
         if post_in_last_n_days(url, num_days){
             ret_urls.push(url.clone());
         }
@@ -46,7 +53,7 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String>{
 }
 
 fn main() {
-    let mut file_path = "World".to_string();
+    let mut file_path = String::new();
     let mut days : u32 = 0;
     {
         let mut ap = ArgumentParser::new();
@@ -74,7 +81,7 @@ fn main() {
 
         let urls_with_news = get_urls_with_recent_posts(&urls, days);
 
-        println!("====================\nUrls mit posts in den letzten {} Tagen: ", days);
+        println!("==============================\nUrls with posts in the last {} days: ({}/{})", days, urls_with_news.len(), urls.len());
         for url in urls_with_news{
             println!("{}", url);
         }
