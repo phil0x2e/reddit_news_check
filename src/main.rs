@@ -15,7 +15,7 @@ fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
     let mut days = Vec::new();
     for d in 0..max_days + 1 {
         if d == 0 {
-            days.push(res.contains(" hours ago") || res.contains(" hour ago"));
+            days.push(res.contains(" hours ago") || res.contains(" hour ago") || res.contains(" minutes ago"));
         } else if d == 1 {
             days.push(res.contains(">1 day ago"));
         } else {
