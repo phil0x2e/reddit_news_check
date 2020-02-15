@@ -16,14 +16,14 @@ fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
     for d in 0..max_days + 1 {
         if d == 0 {
             days.push(
-                res.contains(" hours ago")
-                    || res.contains(" hour ago")
-                    || res.contains(" minutes ago"),
+                res.contains(" hours ago</a>")
+                    || res.contains(" hour ago</a>")
+                    || res.contains(" minutes ago</a>"),
             );
         } else if d == 1 {
-            days.push(res.contains(">1 day ago"));
+            days.push(res.contains(">1 day ago</a>"));
         } else {
-            days.push(res.contains(format!(">{} days ago", d).as_str()));
+            days.push(res.contains(format!(">{} days ago</a>", d).as_str()));
         }
     }
     Ok(days)
