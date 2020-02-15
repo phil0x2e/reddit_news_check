@@ -1,4 +1,7 @@
 # Reddit News Checker
+Checks if there are new posts on subreddits or users.
+Just specify the urls to the profiles or subreddits in a line sperated csv file and specify the number of days, in which to check for new posts.
+0 days means anything under a day, so minutes or hours before. 1 day means 1 day and less ago etc.
 Run with --help to get help.
 
 Important:
