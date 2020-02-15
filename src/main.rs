@@ -32,7 +32,7 @@ fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
 fn post_in_last_n_days(url: &str, n: u32) -> bool {
     match check_url(url, n) {
         Err(_e) => {
-            println!(" (Line is not an URL or answer doesn't have text.)");
+            println!(" (Line is not a correct URL or answer doesn't have text.)");
             false
         }
         Ok(days) => {
@@ -45,7 +45,7 @@ fn post_in_last_n_days(url: &str, n: u32) -> bool {
 fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String> {
     let mut ret_urls = Vec::new();
     for (i, url) in urls.iter().enumerate() {
-        print!("Line {} of {} is being checked...", i + 1, urls.len());
+        print!("URL {} of {} is being checked...", i + 1, urls.len());
         if post_in_last_n_days(url, num_days) {
             ret_urls.push(url.clone());
         }
@@ -82,9 +82,13 @@ fn main() {
         }
     };
     let buf = BufReader::new(file);
-    let urls = buf
+    let mut urls = buf
         .lines()
         .map(|x| x.expect("Error reading line from file"))
+        .collect::<Vec<String>>();
+    urls = urls
+        .into_iter()
+        .filter(|url| url.starts_with("https://www.reddit.com/"))
         .collect::<Vec<String>>();
     let urls_with_news = get_urls_with_recent_posts(&urls, days);
 
