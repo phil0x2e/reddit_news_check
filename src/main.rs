@@ -31,8 +31,8 @@ fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
 
 fn post_in_last_n_days(url: &str, n: u32) -> bool {
     match check_url(url, n) {
-        Err(_e) => {
-            println!(" (Line is not a correct URL or answer doesn't have text.)");
+        Err(e) => {
+            println!("Error: {}", e);
             false
         }
         Ok(days) => {
