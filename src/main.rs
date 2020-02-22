@@ -1,6 +1,8 @@
 extern crate argparse;
 extern crate reqwest;
+extern crate prgrs;
 
+use prgrs::{Prgrs, writeln};
 use argparse::{ArgumentParser, Store};
 use reqwest::header::COOKIE;
 use std::{
@@ -32,11 +34,10 @@ fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
 fn post_in_last_n_days(url: &str, n: u32) -> bool {
     match check_url(url, n) {
         Err(e) => {
-            println!("Error: {}", e);
+            writeln(&format!("Error: {}", e)).ok();
             false
         }
         Ok(days) => {
-            println!("");
             days.contains(&true)
         }
     }
@@ -44,8 +45,7 @@ fn post_in_last_n_days(url: &str, n: u32) -> bool {
 
 fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String> {
     let mut ret_urls = Vec::new();
-    for (i, url) in urls.iter().enumerate() {
-        print!("URL {} of {} is being checked...", i + 1, urls.len());
+    for  url in Prgrs::new(urls.iter(), urls.len()) {
         if post_in_last_n_days(url, num_days) {
             ret_urls.push(url.clone());
         }
