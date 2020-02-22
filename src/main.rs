@@ -2,7 +2,7 @@ extern crate argparse;
 extern crate reqwest;
 extern crate prgrs;
 
-use prgrs::{Prgrs, writeln};
+use prgrs::{Prgrs, Length, writeln};
 use argparse::{ArgumentParser, Store};
 use reqwest::header::COOKIE;
 use std::{
@@ -45,7 +45,7 @@ fn post_in_last_n_days(url: &str, n: u32) -> bool {
 
 fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String> {
     let mut ret_urls = Vec::new();
-    for  url in Prgrs::new(urls.iter(), urls.len()) {
+    for  url in Prgrs::new(urls.iter(), urls.len()).set_length_move(Length::Proportional(0.5)) {
         if post_in_last_n_days(url, num_days) {
             ret_urls.push(url.clone());
         }
