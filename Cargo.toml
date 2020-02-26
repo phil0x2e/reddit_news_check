@@ -1,6 +1,6 @@
 [package]
 name = "reddit_news_checker"
-version = "0.2.8"
+version = "0.2.9"
 authors = ["phil <ph-ketteni@t-online.de>"]
 edition = '2018'
 
