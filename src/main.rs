@@ -93,7 +93,7 @@ fn main() {
     let urls_with_news = get_urls_with_recent_posts(&urls, days);
 
     println!(
-        "==============================\nUrls with posts in the last {} days: ({}/{})",
+        "\nUrls with posts in the last {} days: ({}/{})",
         days,
         urls_with_news.len(),
         urls.len()
