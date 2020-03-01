@@ -2,7 +2,7 @@ extern crate clap;
 extern crate prgrs;
 extern crate reqwest;
 
-use clap::{Arg, App, crate_version, crate_authors, value_t};
+use clap::{crate_authors, crate_version, value_t, App, Arg};
 use prgrs::{writeln, Length, Prgrs};
 use reqwest::header::COOKIE;
 use std::{
@@ -53,18 +53,22 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String> 
 
 fn main() {
     let matches = App::new("Reddit News Checker")
-                          .version(crate_version!())
-                          .author(crate_authors!())
-                          .about("Checks if there are new posts on subreddits or users.")
-                          .arg(Arg::with_name("FILE")
-                               .help("Path to line separated url file.")
-                               .required(true)
-                               .index(1))
-                          .arg(Arg::with_name("DAYS")
-                               .help("Specify in how many past days to search.")
-                               .required(true)
-                               .index(2))
-                          .get_matches();
+        .version(crate_version!())
+        .author(crate_authors!())
+        .about("Checks if there are new posts on subreddits or users.")
+        .arg(
+            Arg::with_name("FILE")
+                .help("Path to line separated url file.")
+                .required(true)
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("DAYS")
+                .help("Specify in how many past days to search.")
+                .required(true)
+                .index(2),
+        )
+        .get_matches();
     let file_path = matches.value_of("FILE").unwrap();
     let days = value_t!(matches.value_of("DAYS"), u32).unwrap_or_else(|e| e.exit());
 
