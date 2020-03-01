@@ -1,6 +1,6 @@
 [package]
 name = "reddit_news_checker"
-version = "0.2.9"
+version = "0.3.0"
 authors = ["phil <ph-ketteni@t-online.de>"]
 edition = '2018'
 
@@ -8,5 +8,5 @@ edition = '2018'
 
 [dependencies]
 reqwest = {version = "0.10", features = ["blocking"]}
-argparse = "0.2"
+clap = "2.33"
 prgrs = "0.6"

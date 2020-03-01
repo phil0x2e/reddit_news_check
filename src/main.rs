@@ -1,8 +1,8 @@
-extern crate argparse;
+extern crate clap;
 extern crate prgrs;
 extern crate reqwest;
 
-use argparse::{ArgumentParser, Store};
+use clap::{Arg, App, crate_version, crate_authors, value_t};
 use prgrs::{writeln, Length, Prgrs};
 use reqwest::header::COOKIE;
 use std::{
@@ -52,25 +52,22 @@ fn get_urls_with_recent_posts(urls: &Vec<String>, num_days: u32) -> Vec<String> 
 }
 
 fn main() {
-    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-    let mut file_path = String::new();
-    let mut days: u32 = 0;
-    let description_str = format!("Reddit news checker Version {}", VERSION);
-    {
-        let mut ap = ArgumentParser::new();
-        ap.set_description(&description_str);
-        ap.refer(&mut file_path).required().add_argument(
-            "FILE",
-            Store,
-            "Path to Line separated url file.",
-        );
-        ap.refer(&mut days).required().add_argument(
-            "DAYS",
-            Store,
-            "Specify in how many past days to search.",
-        );
-        ap.parse_args_or_exit();
-    }
+    let matches = App::new("Reddit News Checker")
+                          .version(crate_version!())
+                          .author(crate_authors!())
+                          .about("Checks if there are new posts on subreddits or users.")
+                          .arg(Arg::with_name("FILE")
+                               .help("Path to line separated url file.")
+                               .required(true)
+                               .index(1))
+                          .arg(Arg::with_name("DAYS")
+                               .help("Specify in how many past days to search.")
+                               .required(true)
+                               .index(2))
+                          .get_matches();
+    let file_path = matches.value_of("FILE").unwrap();
+    let days = value_t!(matches.value_of("DAYS"), u32).unwrap_or_else(|e| e.exit());
+
     let file = File::open(file_path);
     let file = match file {
         Ok(file) => file,
