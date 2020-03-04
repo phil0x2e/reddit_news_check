@@ -41,11 +41,11 @@ fn post_in_last_n_days(url: &str, n: u32) -> bool {
     }
 }
 
-fn get_urls_with_recent_posts(urls: &[String], num_days: u32) -> Vec<String> {
+fn get_urls_with_recent_posts(urls: &[String], num_days: u32) -> Vec<&String> {
     let mut ret_urls = Vec::new();
     for url in Prgrs::new(urls.iter(), urls.len()).set_length_move(Length::Proportional(0.5)) {
         if post_in_last_n_days(url, num_days) {
-            ret_urls.push(url.clone());
+            ret_urls.push(url);
         }
     }
     ret_urls
@@ -89,6 +89,7 @@ fn main() {
         .into_iter()
         .filter(|url| url.starts_with("https://www.reddit.com/"))
         .collect::<Vec<String>>();
+        
     println!("Checking {} urls..", urls.len());
     let urls_with_news = get_urls_with_recent_posts(&urls, days);
 
