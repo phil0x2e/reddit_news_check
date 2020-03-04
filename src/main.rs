@@ -5,10 +5,7 @@ extern crate reqwest;
 use clap::{crate_authors, crate_version, value_t, App, Arg};
 use prgrs::{writeln, Length, Prgrs};
 use reqwest::header::COOKIE;
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
-};
+use std::fs;
 
 fn check_url(url: &str, max_days: u32) -> Result<Vec<bool>, reqwest::Error> {
     let client = reqwest::blocking::Client::new();
@@ -51,7 +48,7 @@ fn get_urls_with_recent_posts(urls: &[String], num_days: u32) -> Vec<&String> {
     ret_urls
 }
 
-fn main() {
+fn get_commandline_arguments() -> (String, u32) {
     let matches = App::new("Reddit News Checker")
         .version(crate_version!())
         .author(crate_authors!())
@@ -71,25 +68,21 @@ fn main() {
         .get_matches();
     let file_path = matches.value_of("FILE").unwrap();
     let days = value_t!(matches.value_of("DAYS"), u32).unwrap_or_else(|e| e.exit());
+    (String::from(file_path), days)
+}
 
-    let file = File::open(file_path);
-    let file = match file {
-        Ok(file) => file,
-        Err(_error) => {
-            println!("File not found, or could not be opened.");
-            return;
-        }
-    };
-    let buf = BufReader::new(file);
-    let mut urls = buf
+fn main() {
+    let (file_path, days) = get_commandline_arguments();
+    let mut urls: Vec<String> = fs::read_to_string(file_path)
+        .expect("Error reading file")
         .lines()
-        .map(|x| x.expect("Error reading line from file"))
-        .collect::<Vec<String>>();
+        .map(|s| String::from(s))
+        .collect();
     urls = urls
         .into_iter()
         .filter(|url| url.starts_with("https://www.reddit.com/"))
-        .collect::<Vec<String>>();
-        
+        .collect();
+
     println!("Checking {} urls..", urls.len());
     let urls_with_news = get_urls_with_recent_posts(&urls, days);
 
