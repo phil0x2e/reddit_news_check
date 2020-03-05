@@ -49,19 +49,20 @@ fn get_urls_with_recent_posts(urls: &[String], num_days: u32) -> Vec<&String> {
 }
 
 fn get_commandline_arguments() -> (String, u32) {
+    let description = "This tool checks if there are new posts on subreddits or users.\n\nJust pass a file with line separated urls to subreddits, reddit users etc. and a time interval in which to search and it will return all urls, that have a new post in the specified time.\nFor it to work as expected you should specify the url of a subreddit with /new/ at the end and for a user with /posts/.";
     let matches = App::new("Reddit News Checker")
         .version(crate_version!())
         .author(crate_authors!())
-        .about("Checks if there are new posts on subreddits or users.")
+        .about(description)
         .arg(
             Arg::with_name("FILE")
-                .help("Path to line separated url file.")
+                .help("Path to line separated url file.\nUrls have to start with https://www.reddit.com/, otherwise they will be ignored.")
                 .required(true)
                 .index(1),
         )
         .arg(
             Arg::with_name("DAYS")
-                .help("Specify in how many past days to search.")
+                .help("Specify in how many past days to search for new posts.\nA value of 0 means 24 hours or less. A value of 1 means 1 day or less etc.")
                 .required(true)
                 .index(2),
         )
