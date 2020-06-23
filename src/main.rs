@@ -79,10 +79,7 @@ fn main() {
         .lines()
         .map(|s| String::from(s))
         .collect();
-    urls = urls
-        .into_iter()
-        .filter(|url| url.starts_with("https://www.reddit.com/"))
-        .collect();
+    urls.retain(|url| url.starts_with("https://www.reddit.com/"));
 
     println!("Checking {} urls..", urls.len());
     let urls_with_news = get_urls_with_recent_posts(&urls, days);
