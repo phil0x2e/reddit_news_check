@@ -1,3 +1,5 @@
+![Release version](https://img.shields.io/github/v/release/phil0x2e/reddit_news_check)
+
 # Reddit News Checker
 Checks if there are new posts on subreddits or users.
 
