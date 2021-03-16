@@ -1,12 +1,14 @@
 [package]
 name = "reddit_news_checker"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["phil0x2e <ph-ketteni@t-online.de>"]
 edition = '2018'
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = {version = "0.10", features = ["blocking"]}
+reqwest = {version = "0.11"}
+tokio = { version = "1.3", features = ["full"]}
+futures = "0.3"
 clap = "2.33"
 prgrs = "0.6"

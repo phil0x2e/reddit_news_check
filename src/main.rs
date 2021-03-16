@@ -3,13 +3,20 @@ extern crate prgrs;
 extern crate reqwest;
 
 use clap::{crate_authors, crate_version, value_t, App, Arg};
+use futures::executor::block_on;
+use futures::future::join_all;
 use prgrs::{writeln, Length, Prgrs};
 use reqwest::header::COOKIE;
 use std::fs;
+use std::sync::Arc;
 
-fn check_url(url: &str, max_days: u32, warn: bool) -> Result<Vec<bool>, reqwest::Error> {
-    let client = reqwest::blocking::Client::new();
-    let res = client.get(url).header(COOKIE, "over18=1").send()?;
+async fn check_url(
+    client: Arc<reqwest::Client>,
+    url: &str,
+    max_days: u32,
+    warn: bool,
+) -> Result<Vec<bool>, reqwest::Error> {
+    let res = client.get(url).header(COOKIE, "over18=1").send().await?;
     if res.status() == 404 {
         if warn {
             writeln(&format!("Warning: {} does not exist.", url))
@@ -17,7 +24,7 @@ fn check_url(url: &str, max_days: u32, warn: bool) -> Result<Vec<bool>, reqwest:
         }
         return Ok(Vec::new());
     }
-    let text = res.text()?;
+    let text = res.text().await?;
 
     let mut days = Vec::new();
     for d in 0..max_days + 1 {
@@ -36,23 +43,42 @@ fn check_url(url: &str, max_days: u32, warn: bool) -> Result<Vec<bool>, reqwest:
     Ok(days)
 }
 
-fn post_in_last_n_days(url: &str, n: u32, warn: bool) -> bool {
-    match check_url(url, n, warn) {
+async fn post_in_last_n_days<'a>(
+    client: Arc<reqwest::Client>,
+    url: String,
+    n: u32,
+    warn: bool,
+) -> (String, bool) {
+    match check_url(client, &url, n, warn).await {
         Err(e) => {
             writeln(&format!("Error: {}", e)).ok();
-            false
+            (String::from(url), false)
         }
-        Ok(days) => days.contains(&true),
+        Ok(days) => (String::from(url), days.contains(&true)),
     }
 }
 
-fn get_urls_with_recent_posts(urls: &[String], num_days: u32, warn: bool) -> Vec<&String> {
-    let mut ret_urls = Vec::new();
+async fn get_urls_with_recent_posts(urls: Vec<String>, num_days: u32, warn: bool) -> Vec<String> {
+    let client = Arc::new(reqwest::Client::new());
+    let mut tasks = Vec::with_capacity(urls.len());
     for url in Prgrs::new(urls.iter(), urls.len()).set_length_move(Length::Proportional(0.5)) {
-        if post_in_last_n_days(url, num_days, warn) {
-            ret_urls.push(url);
-        }
+        tasks.push(tokio::spawn(post_in_last_n_days(
+            client.clone(),
+            String::from(url),
+            num_days,
+            warn,
+        )));
     }
+    let res: Vec<(String, bool)> = join_all(tasks)
+        .await
+        .into_iter()
+        .map(Result::unwrap)
+        .collect();
+    let ret_urls: Vec<String> = res
+        .into_iter()
+        .filter_map(|r| if r.1 { Some(r.0) } else { None })
+        .collect();
+
     ret_urls
 }
 
@@ -98,7 +124,8 @@ fn get_commandline_arguments() -> Config {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let conf = get_commandline_arguments();
     let mut urls: Vec<String> = fs::read_to_string(conf.file_path)
         .expect("Error reading file")
@@ -106,15 +133,15 @@ fn main() {
         .map(|s| String::from(s))
         .collect();
     urls.retain(|url| url.starts_with("https://www.reddit.com/"));
-
+    let total_len = urls.len();
     println!("Checking {} urls..", urls.len());
-    let urls_with_news = get_urls_with_recent_posts(&urls, conf.days, conf.warn);
+    let urls_with_news = block_on(get_urls_with_recent_posts(urls, conf.days, conf.warn));
 
     println!(
         "\nUrls with posts in the last {} days: ({}/{})",
         conf.days,
         urls_with_news.len(),
-        urls.len()
+        total_len
     );
     for url in urls_with_news {
         println!("{}", url);
