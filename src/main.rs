@@ -23,7 +23,10 @@ async fn check_url(
                 .expect("Something went wrong printing warning");
         }
         return Ok(Vec::new());
+    }else if res.status() != 200 {
+        writeln(&format!("Warning: Received Status Code {}", res.status())).expect("Something went wrong printing warning");
     }
+
     let text = res.text().await?;
 
     let mut days = Vec::new();
