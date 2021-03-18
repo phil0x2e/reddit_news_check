@@ -62,12 +62,12 @@ async fn get_urls_with_recent_posts(urls: Vec<String>, num_days: u32, warn: bool
     let client = Arc::new(reqwest::Client::new());
     let mut tasks = Vec::with_capacity(urls.len());
     for url in urls.iter() {
-        tasks.push(post_in_last_n_days(
+        tasks.push(tokio::spawn(post_in_last_n_days(
             client.clone(),
             String::from(url),
             num_days,
             warn,
-        ));
+        )));
     }
 
     let unpin_futs: Vec<_> = tasks.into_iter().map(Box::pin).collect();
@@ -79,11 +79,15 @@ async fn get_urls_with_recent_posts(urls: Vec<String>, num_days: u32, warn: bool
             break;
         }
         match select_all(futs).await {
-            ((url, new_post), _index, remaining) => {
+            (Ok((url, new_post)), _index, remaining) => {
                 futs = remaining;
                 if new_post {
                     ret_urls.push(url);
                 }
+            }
+            (Err(_e), _index, remaining) => {
+                futs = remaining;
+                continue;
             }
         }
     }
