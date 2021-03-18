@@ -4,7 +4,7 @@ extern crate reqwest;
 
 use clap::{crate_authors, crate_version, value_t, App, Arg};
 use futures::executor::block_on;
-use futures::future::join_all;
+use futures::future::select_all;
 use prgrs::{writeln, Length, Prgrs};
 use reqwest::header::COOKIE;
 use std::fs;
@@ -61,23 +61,32 @@ async fn post_in_last_n_days<'a>(
 async fn get_urls_with_recent_posts(urls: Vec<String>, num_days: u32, warn: bool) -> Vec<String> {
     let client = Arc::new(reqwest::Client::new());
     let mut tasks = Vec::with_capacity(urls.len());
-    for url in Prgrs::new(urls.iter(), urls.len()).set_length_move(Length::Proportional(0.5)) {
-        tasks.push(tokio::spawn(post_in_last_n_days(
+    for url in urls.iter() {
+        tasks.push(post_in_last_n_days(
             client.clone(),
             String::from(url),
             num_days,
             warn,
-        )));
+        ));
     }
-    let res: Vec<(String, bool)> = join_all(tasks)
-        .await
-        .into_iter()
-        .map(Result::unwrap)
-        .collect();
-    let ret_urls: Vec<String> = res
-        .into_iter()
-        .filter_map(|r| if r.1 { Some(r.0) } else { None })
-        .collect();
+
+    let unpin_futs: Vec<_> = tasks.into_iter().map(Box::pin).collect();
+    let mut futs = unpin_futs;
+
+    let mut ret_urls = Vec::with_capacity(urls.len());
+    for _ in Prgrs::new(0..futs.len(), futs.len()).set_length_move(Length::Proportional(0.5)) {
+        if futs.is_empty() {
+            break;
+        }
+        match select_all(futs).await {
+            ((url, new_post), _index, remaining) => {
+                futs = remaining;
+                if new_post {
+                    ret_urls.push(url);
+                }
+            }
+        }
+    }
 
     ret_urls
 }
